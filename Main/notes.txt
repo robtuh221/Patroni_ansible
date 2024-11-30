@@ -1,0 +1,48 @@
+Astra Linux
+ /etc/apt/sources.list
+
+deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-base 1.7_x86-64 main non-free contrib
+deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-extended 1.7_x86-64 main contrib non-free
+
+
+[WARNING]: Platform linux on host 10.22.2.202 is using the discovered Python interpreter at /usr/bin/python, but future installation of another Python interpreter could change this. See
+https://docs.ansible.com/ansible/2.9/reference_appendices/interpreter_discovery.html for more information.
+
+Это предупреждение связано с механизмом обнаружения Python-интерпретатора (Python interpreter discovery) в Ansible. Вот что оно означает:
+
+Причина предупреждения
+Ansible автоматически ищет интерпретатор Python на управляемом узле (хосте) для выполнения своих модулей. В данном случае Ansible обнаружил, что используется интерпретатор Python, расположенный по пути /usr/bin/python.
+
+Но:
+
+Если на вашем узле будет установлен другой интерпретатор (например, /usr/bin/python3), то это может изменить поведение playbook.
+Ansible сообщает, что для большей стабильности вы можете явно указать путь к нужному интерпретатору Python.
+Решение
+Чтобы устранить предупреждение и быть уверенным, что Ansible использует нужный интерпретатор, добавьте параметр ansible_python_interpreter в ваш инвентарь.
+
+hosts.ini
+[all]
+10.22.2.202 ansible_user=myuser ansible_become=true ansible_python_interpreter=/usr/bin/python3
+
+В Playbook:
+Вы можете указать интерпретатор в блоке vars:
+
+---
+- hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Проверить Python интерпретатор
+      command: python3 --version
+
+
+В глобальном конфигурационном файле ansible.cfg:
+Если все ваши узлы используют один и тот же интерпретатор, настройте его глобально:
+[defaults]
+interpreter_python = /usr/bin/python3
+Почему это важно?
+Узлы могут иметь разные версии Python (python2, python3) или разные пути к ним.
+Некоторые модули Ansible требуют Python 3, а не Python 2.
+После внесения изменений предупреждение исчезнет, и playbook станет стабильнее при выполнении на разных узлах.
+
