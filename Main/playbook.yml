@@ -55,7 +55,7 @@
           name: etcd
           update_cache: yes
           state: present
-  
+          
       - name: Install setuptools for Python 3
         ansible.builtin.pip:
           name: setuptools

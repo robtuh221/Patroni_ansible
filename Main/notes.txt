@@ -46,3 +46,11 @@ interpreter_python = /usr/bin/python3
 Некоторые модули Ansible требуют Python 3, а не Python 2.
 После внесения изменений предупреждение исчезнет, и playbook станет стабильнее при выполнении на разных узлах.
 
+Установка нескольких пакетов
+
+      - name: Install multiple Python packages
+        ansible.builtin.pip:
+          name:
+            - psycopg
+            - python-etcd
+            - etcd3
