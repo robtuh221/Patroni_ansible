@@ -1,0 +1,4 @@
+etcd_host_1: 192.168.100.239
+etcd_patroni_host_1: 192.168.100.239:2379,192.168.100.239:2379,192.168.100.239:2379
+etcd_hostname_1: pp_services_1
+patroni_hostname_1: patroni1

@@ -1,73 +1,104 @@
 ---
-  - hosts: all
-    become: true
-    vars:
-      ansible_python_interpreter: /usr/bin/python3
-  
-    tasks:
-      - name: Kill processes locking dpkg
-        ansible.builtin.shell: |
-          fuser -k /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock || true
-  
-      - name: Comment out CD-ROM repository entry
-        ansible.builtin.lineinfile:
-          path: /etc/apt/sources.list
-          regexp: '^deb cdrom:'
-          line: '# deb cdrom:[OS Astra Linux 1.7.0 1.7_x86-64 DVD ]/ 1.7_x86-64 contrib main non-free'
-          state: present
-  
-      - name: Ensure repository-base is present
-        ansible.builtin.lineinfile:
-          path: /etc/apt/sources.list
-          line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-base 1.7_x86-64 main non-free contrib"
-          state: present
-          insertafter: EOF
-  
-      - name: Ensure repository-extended is present
-        ansible.builtin.lineinfile:
-          path: /etc/apt/sources.list
-          line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-extended 1.7_x86-64 main contrib non-free"
-          state: present
-          insertafter: EOF
-  
-      - name: Fix broken dpkg state
-        ansible.builtin.command:
-          cmd: dpkg --configure -a
-        args:
-          warn: false
-  
-      - name: Update package cache
-        ansible.builtin.apt:
-          update_cache: yes
-  
-      - name: Upgrade all packages to latest
-        ansible.builtin.apt:
-          upgrade: dist
-  
-      - name: Install python3-pip
-        ansible.builtin.apt:
-          name: python3-pip
-          update_cache: yes
-          state: present
-  
-      - name: Install etcd
-        ansible.builtin.apt:
-          name: etcd
-          update_cache: yes
-          state: present
-          
-      - name: Install setuptools for Python 3
-        ansible.builtin.pip:
-          name: setuptools
-  
-      - name: Install multiple Python packages
-        ansible.builtin.pip:
-          name:
-            - psycopg
-            - python-etcd
-            - etcd3
-  
-      - name: Install patroni packages with pip3
-        ansible.builtin.pip:
-          name: patroni
-  
+- name: Установка зависимостей и подготовка системы
+  hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - /tmp/test_ansible/host_vars/node1.yml
+
+  tasks:
+    - name: Убить процессы, блокирующие dpkg
+      ansible.builtin.shell: |
+        fuser -k /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock || true
+
+    - name: Закомментировать запись репозитория CD-ROM
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        regexp: '^deb cdrom:'
+        line: '# deb cdrom:[OS Astra Linux 1.7.0 1.7_x86-64 DVD ]/ 1.7_x86-64 contrib main non-free'
+        state: present
+
+    - name: Убедиться, что база репозитория присутствует
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-base 1.7_x86-64 main non-free contrib"
+        state: present
+        insertafter: EOF
+
+    - name: Убедиться, что расширение репозитория присутствует
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-extended 1.7_x86-64 main contrib non-free"
+        state: present
+        insertafter: EOF
+
+    - name: Исправить ошибки в состоянии dpkg
+      ansible.builtin.command:
+        cmd: dpkg --configure -a
+      args:
+        warn: false
+
+    - name: Обновить кэш пакетов
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Обновить все пакеты до последних версий
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Установить python3-pip
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+
+    - name: Установить etcd
+      ansible.builtin.apt:
+        name: etcd
+        state: present
+
+    - name: Установить setuptools через pip
+      ansible.builtin.pip:
+        name: setuptools
+
+    - name: Установить необходимые пакеты Python
+      ansible.builtin.pip:
+        name:
+          - psycopg
+          - python-etcd
+          - etcd3
+
+    - name: Установить пакет patroni через pip
+      ansible.builtin.pip:
+        name: patroni
+
+- name: Настройка и запуск etcd
+  tasks:
+    - name: Создать директорию для конфигурации etcd (если не существует)
+      ansible.builtin.file:
+        path: /var/lib/etcd
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Развернуть конфиг etcd из шаблона
+      ansible.builtin.template:
+        src: /tmp/test_ansible/confgis/etcd.conf.j2
+        dest: /etc/default/etcd
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Reload and restart etcd
+
+    - name: Очистить директорию с членами кластера
+      ansible.builtin.shell: |
+        rm -rf /var/lib/etcd/member/*
+
+  handlers:
+    - name: Reload and restart etcd
+      ansible.builtin.systemd:
+        name: etcd
+        state: restarted
+        daemon_reload: yes
+
