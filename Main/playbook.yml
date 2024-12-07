@@ -5,7 +5,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   vars_files:
-    - /tmp/test_ansible/host_vars/node1.yml
+    - /tmp/test_ansible/host_vars/{{ inventory_hostname }}.yml
 
   tasks:
     - name: Убить процессы, блокирующие dpkg
@@ -102,3 +102,28 @@
         state: restarted
         daemon_reload: yes
 
+- name: Настройка и запуск Patroni
+  tasks: 
+    - name: Развернуть конфиг сервиса Patroni 
+      ansible.builtin.template:
+        src: /tmp/test_ansible/confgis/patroni_service.conf.j2
+        dest: /lib/systemd/system/patroni.service
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Создать директорию для конфигурации Patroni (если не существует)
+      ansible.builtin.file:
+        path: /etc/patroni
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0755'
+    
+    - name: Развернуть конфиг Patroni из шаблона
+      ansible.builtin.template:
+        src: /tmp/test_ansible/confgis/patroni.conf.j2
+        dest: /etc/patroni/config.yml
+        owner: postgres
+        group: postgres
+        mode: '0755'
