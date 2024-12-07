@@ -71,7 +71,57 @@
     - name: Установить пакет patroni через pip
       ansible.builtin.pip:
         name: patroni
+#############################################Блок установки базы Tantor###############################################
+    - name: Скачать скрипт db_installer.sh
+      ansible.builtin.get_url:
+        url: https://public.tantorlabs.ru/db_installer.sh
+        dest: /tmp/db_installer.sh
+        mode: '0755'  # Устанавливает права доступа 755 (чтение и выполнение для всех)
+        validate_certs: no  # Отключает проверку сертификатов
 
+    - name: Убедиться, что скрипт db_installer.sh имеет права на выполнение
+      ansible.builtin.file:
+        path: /tmp/db_installer.sh
+        mode: '0755'
+
+    - name: Скопировать файл tantor-se-server-15_15.6.0_amd64.deb на удаленный хост
+      ansible.builtin.copy:
+        src: /tmp/test_ansible/tantor-se-server-15_15.6.0_amd64.deb
+        dest: /tmp/tantor-se-server-15_15.6.0_amd64.deb
+        mode: '0644'
+
+    - name: Сборка базы Tantor
+      ansible.builtin.shell: |
+        /tmp/db_installer.sh --do-initdb --from-file=/tmp/tantor-se-server-15_15.6.0_amd64.deb
+    
+    - name: Вывод статуса сервиса tantor-se-server-15.service
+      ansible.builtin.command:
+        cmd: systemctl status tantor-se-server-15.service
+      register: tantordb_status
+      ignore_errors: yes
+
+    - name: Вывести статус сервиса tantor-se-server-15.service
+      ansible.builtin.debug:
+        msg: "{{ tantordb_status.stdout }}"
+
+    - name: Отключить сервис tantor-se-server-15
+      ansible.builtin.systemd:
+        name: tantor-se-server-15.service
+        enabled: no
+
+    - name: Очистка директории /var/lib/postgresql/tantor-se-15/data/
+      ansible.builtin.shell: |
+        rm -rf /var/lib/postgresql/tantor-se-15/data/*
+    
+    - name: Проверка очищенной директории
+      ansible.builtin.command:
+        cmd: ls -la /var/lib/postgresql/tantor-se-15/data/
+      register: look_directory
+
+    - name: Вывести статус выполнения команды rm -rf
+      ansible.builtin.debug:
+        msg: "{{ look_directory.stdout }}"
+#######################################################################################################################
 - name: Настройка и запуск etcd
   tasks:
     - name: Создать директорию для конфигурации etcd (если не существует)
