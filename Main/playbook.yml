@@ -8,6 +8,7 @@
     - /tmp/test_ansible/host_vars/{{ inventory_hostname }}.yml
 
   tasks:
+    ###################################################Блок обновления пакетов и установка совместимостей###################################################
     - name: Убить процессы, блокирующие dpkg
       ansible.builtin.shell: |
         fuser -k /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock || true
@@ -71,7 +72,9 @@
     - name: Установить пакет patroni через pip
       ansible.builtin.pip:
         name: patroni
-#############################################Блок установки базы Tantor###############################################
+
+    #############################################################################################################################################################
+    #############################################Блок установки базы Tantor######################################################################################
     - name: Скачать скрипт db_installer.sh
       ansible.builtin.get_url:
         url: https://public.tantorlabs.ru/db_installer.sh
@@ -93,7 +96,7 @@
     - name: Сборка базы Tantor
       ansible.builtin.shell: |
         /tmp/db_installer.sh --do-initdb --from-file=/tmp/tantor-se-server-15_15.6.0_amd64.deb
-    
+
     - name: Вывод статуса сервиса tantor-se-server-15.service
       ansible.builtin.command:
         cmd: systemctl status tantor-se-server-15.service
@@ -112,7 +115,7 @@
     - name: Очистка директории /var/lib/postgresql/tantor-se-15/data/
       ansible.builtin.shell: |
         rm -rf /var/lib/postgresql/tantor-se-15/data/*
-    
+
     - name: Проверка очищенной директории
       ansible.builtin.command:
         cmd: ls -la /var/lib/postgresql/tantor-se-15/data/
@@ -121,24 +124,28 @@
     - name: Вывести статус выполнения команды rm -rf
       ansible.builtin.debug:
         msg: "{{ look_directory.stdout }}"
-#######################################################################################################################
+
+##################################################################################################################################################################
+##################################################Блок установки сервиса etcd#####################################################################################
 - name: Настройка и запуск etcd
+  hosts: servers
+  become: true
   tasks:
     - name: Создать директорию для конфигурации etcd (если не существует)
       ansible.builtin.file:
         path: /var/lib/etcd
         state: directory
-        owner: root
-        group: root
-        mode: '0755'
+        owner: postgres
+        group: postgres
+        mode: '0777'
 
     - name: Развернуть конфиг etcd из шаблона
       ansible.builtin.template:
-        src: /tmp/test_ansible/confgis/etcd.conf.j2
+        src: /tmp/test_ansible/configs/etcd.conf.j2
         dest: /etc/default/etcd
-        owner: root
-        group: root
-        mode: '0755'
+        owner: postgres
+        group: postgres
+        mode: '0777'
       notify: Reload and restart etcd
 
     - name: Очистить директорию с членами кластера
@@ -152,11 +159,15 @@
         state: restarted
         daemon_reload: yes
 
+####################################################################################################################################################################
+###################################################Блок настройки Patroni######################################################################################
 - name: Настройка и запуск Patroni
-  tasks: 
-    - name: Развернуть конфиг сервиса Patroni 
+  hosts: servers
+  become: true
+  tasks:
+    - name: Развернуть конфиг сервиса Patroni
       ansible.builtin.template:
-        src: /tmp/test_ansible/confgis/patroni_service.conf.j2
+        src: /tmp/test_ansible/configs/patroni_service.conf.j2
         dest: /lib/systemd/system/patroni.service
         owner: root
         group: root
@@ -169,11 +180,37 @@
         owner: postgres
         group: postgres
         mode: '0755'
-    
+
     - name: Развернуть конфиг Patroni из шаблона
       ansible.builtin.template:
-        src: /tmp/test_ansible/confgis/patroni.conf.j2
+        src: /tmp/test_ansible/configs/patroni.conf.j2
         dest: /etc/patroni/config.yml
         owner: postgres
         group: postgres
         mode: '0755'
+
+    - name: Добавление сервиса patroni в автозагрузку
+      ansible.builtin.systemd:
+        name: patroni
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Создать директорию для логов psql
+      ansible.builtin.file:
+        path: /var/log/pgsql
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0777'
+
+    - name: Установление прав на директорию базы данных
+      ansible.builtin.file:
+        path: /var/lib/postgresql
+        owner: postgres
+        group: postgres
+        mode: '0700'
+
+    - name: Запуск сервиса Patroni
+      ansible.builtin.systemd:
+        name: patroni
+        state: restarted
