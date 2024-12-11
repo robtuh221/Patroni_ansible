@@ -3,7 +3,7 @@ name: {{ patroni_hostname }}
 namespace: /service
 
 etcd3:
-  hosts: {{ etcd_patroni_host }}
+  hosts: {{ groups['servers'] | map('extract', hostvars, 'etcd_host') | map('regex_replace', '^(.*)$', '\\1:2379') | join(',') }}
 
 restapi:
   listen: 0.0.0.0:8008
@@ -118,6 +118,8 @@ bootstrap:
     - host    replication     all             ::1/128                 trust
     - host replication replicator 127.0.0.1/32 scram-sha-256
     - local replication postgres    scram-sha-256
+    - host replication replicator  localhost   scram-sha-256
+    - host replication replicator              0.0.0.0/0              trust
 
 postgresql:
   listen: 0.0.0.0:5432
