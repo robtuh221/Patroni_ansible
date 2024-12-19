@@ -72,6 +72,11 @@
     - name: Установить пакет patroni через pip
       ansible.builtin.pip:
         name: patroni
+    
+    - name: Установка пакета keepalived
+      ansible.builtin.apt:
+        name: keepalived
+        state: present
 
     #############################################################################################################################################################
     #############################################Блок установки базы Tantor######################################################################################
@@ -214,3 +219,32 @@
       ansible.builtin.systemd:
         name: patroni
         state: restarted
+
+#################################################___Настройка сервиса keepalived___###################################################
+
+    - name: Добавление параметров в файл sysctl.conf
+      ansible.builtin.lineinfile:
+      path: /etc/sysctl.conf
+      line: "net.ipv4.ip_nonlocal_bind=1"
+      state: present
+      insertafter: EOF
+    
+    - name: Перезагрузка sysctl
+      ansible.builtin.shell: |
+       sysctl -p
+    
+    - name: Добавление конфигурации keepalived
+      ansible.builtin.template:
+        src: /tmp/test_ansible/configs/keeaplived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0777'
+    
+    - name: Добавление в автозагрузку и перезапуск сервиса keepalived
+      ansible.builtin.systemd:
+        name: keepalived
+        enabled: yes
+        state: restarted
+    
+    
