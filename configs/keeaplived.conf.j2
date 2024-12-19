@@ -1,0 +1,31 @@
+! Configuration File for keepalived
+
+global_defs {
+   router_id ocp_vrrp
+   enable_script_security
+   script_user root
+}
+
+vrrp_script haproxy_check {
+   script "/usr/libexec/keepalived/haproxy_check.sh"
+   interval 2
+   weight 2
+}
+
+vrrp_instance VI_1 {
+   interface {{ storage_interface }}
+   virtual_router_id 50
+   priority  100
+   advert_int 2
+   state  BACKUP
+   virtual_ipaddress {
+       {{ vip_address }}
+   }
+   track_script {
+       haproxy_check
+   }
+   authentication {
+      auth_type PASS
+      auth_pass cluster2U
+   }
+}
