@@ -78,6 +78,10 @@
         name: keepalived
         state: present
 
+    - name: Установка пакета haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
     #############################################################################################################################################################
     #############################################Блок установки базы Tantor######################################################################################
     - name: Скачать скрипт db_installer.sh
@@ -247,4 +251,18 @@
         enabled: yes
         state: restarted
     
+#################################################___Настройка сервиса haproxy___###################################################
+
+    - name: Добавление конфигурации haproxy
+      ansible.builtin.template:
+        src: /tmp/test_ansible/configs/haproxy.conf.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: '0777'
     
+    - name: Добавление в автозагрузку и перезапуск сервиса keepalived
+      ansible.builtin.systemd:
+          name: haproxy
+          enabled: yes
+          state: restarted

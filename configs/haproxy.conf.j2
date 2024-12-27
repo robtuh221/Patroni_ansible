@@ -1,0 +1,75 @@
+global
+    maxconn 100000
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy-master.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    mode               tcp
+    log                global
+    retries            2
+    timeout queue      5s
+    timeout connect    5s
+    timeout client     60m
+    timeout server     60m
+    timeout check      15s
+
+listen stats
+    mode http
+   ########__ ПРОВЕРЬ!!!__####### bind {% for host in groups['servers'] %},{{ hostvars[host]['etcd_host'] }}:7000{% endfor %}
+    stats enable
+    stats uri /
+
+listen master
+    bind {{ vip_address }}:5000
+    maxconn 10000
+    option tcplog
+    option httpchk OPTIONS /primary
+    http-check expect status 200
+    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
+ server astra1 172.20.130.101:5432 check port 8008
+ server astra2 172.20.130.102:5432 check port 8008
+ server astra3 172.20.130.103:5432 check port 8008
+
+
+listen replicas
+    bind {{ vip_address }}:5001
+    maxconn 10000
+    option tcplog
+        option httpchk OPTIONS /replica?lag=100MB
+        balance roundrobin
+    http-check expect status 200
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+ server astra1 172.20.130.101:5432 check port 8008
+ server astra2 172.20.130.102:5432 check port 8008
+ server astra3 172.20.130.103:5432 check port 8008
+
+listen replicas_sync
+    bind {{ vip_address }}:5002
+    maxconn 10000
+    option tcplog
+        option httpchk OPTIONS /sync
+        balance roundrobin
+    http-check expect status 200
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+ server astra1 172.20.130.101:5432 check port 8008
+ server astra2 172.20.130.102:5432 check port 8008
+ server astra3 172.20.130.103:5432 check port 8008
+
+
+listen replicas_async
+    bind {{ vip_address }}:5003
+    maxconn 10000
+    option tcplog
+        option httpchk OPTIONS /async?lag=100MB
+        balance roundrobin
+    http-check expect status 200
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+ server astra1 172.20.130.101:5432 check port 8008
+ server astra2 172.20.130.102:5432 check port 8008
+ server astra3 172.20.130.103:5432 check port 8008
