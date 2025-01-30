@@ -1,6 +1,6 @@
-etcd_host: 192.168.100.234
+etcd_host: 
 etcd_hostname: pp_services_1
 patroni_hostname: patroni1
 storage_interface: eth1
-vip_address: 192.168.100.200
+vip_address: 
 data_dir: /var/lib/postgresql/tantor-se-15/data/

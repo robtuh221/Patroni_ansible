@@ -1,4 +1,4 @@
-etcd_host: 192.168.100.242
+etcd_host: 
 etcd_hostname: pp_services_2
 patroni_hostname: patroni2
 storage_interface: eth1
