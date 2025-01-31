@@ -1,0 +1,151 @@
+scope: Cluster2U
+name: {{ patroni_hostname }}
+namespace: /service
+
+etcd3:
+  hosts: {{ groups['servers'] | map('extract', hostvars, 'etcd_host') | map('regex_replace', '^(.*)$', '\\1:2379') | join(',') }}
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: {{ etcd_host }}:8008
+
+bootstrap:
+  method: initdb
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    master_start_timeout: 300
+    synchronous_mode: true
+    synchronous_mode_strict: false
+    synchronous_node_count: 1
+    postgresql:
+      use_pg_rewind: true
+      remove_data_directory_on_diverged_timelines: true
+      remove_data_directory_on_rewind_failure: true
+      use_slots: true
+      parameters:
+        max_connections: 1000
+        superuser_reserved_connections: 5
+        password_encryption: scram-sha-256
+        max_locks_per_transaction: 512
+        max_prepared_transactions: 0
+        huge_pages: try
+        shared_buffers: 4GB
+        effective_cache_size: 12GB
+        work_mem: 32MB
+        maintenance_work_mem: 1GB
+        checkpoint_timeout: 15min
+        checkpoint_completion_target: 0.9
+        min_wal_size: 2GB
+        max_wal_size: 8GB
+        wal_buffers: 32MB
+        default_statistics_target: 1000
+        seq_page_cost: 1
+        random_page_cost: 1.1
+        effective_io_concurrency: 200
+        synchronous_commit: on
+        autovacuum: on
+        autovacuum_max_workers: 5
+        autovacuum_vacuum_scale_factor: 0.01
+        autovacuum_analyze_scale_factor: 0.01
+        autovacuum_vacuum_cost_limit: 500
+        autovacuum_vacuum_cost_delay: 2
+        autovacuum_naptime: 1s
+        max_files_per_process: 4096
+        archive_mode: on
+        archive_timeout: 300s
+        archive_command: cd .
+        wal_level: hot_standby
+        wal_keep_size: 2GB
+        max_wal_senders: 10
+        max_replication_slots: 10
+        hot_standby: on
+        wal_log_hints: on
+        wal_compression: on
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        pg_stat_statements.max: 10000
+        pg_stat_statements.track: all
+        pg_stat_statements.track_utility: false
+        pg_stat_statements.save: true
+        auto_explain.log_min_duration: 10s
+        auto_explain.log_analyze: true
+        auto_explain.log_buffers: true
+        auto_explain.log_timing: false
+        auto_explain.log_triggers: true
+        auto_explain.log_verbose: true
+        auto_explain.log_nested_statements: true
+        auto_explain.sample_rate: 0.01
+        track_io_timing: on
+        log_lock_waits: on
+        log_temp_files: 0
+        track_activities: on
+        track_activity_query_size: 4096
+        track_counts: on
+        track_functions: all
+        log_checkpoints: on
+        logging_collector: on
+        log_truncate_on_rotation: on
+        log_rotation_age: 1d
+        log_rotation_size: 0
+        log_line_prefix: '%t [%p-%l] %r %q%u@%d '
+        log_filename: postgresql-%a.log
+        log_directory: /var/log/pgsql/
+        hot_standby_feedback: on
+        max_standby_streaming_delay: 30s
+        wal_receiver_status_interval: 10s
+        idle_in_transaction_session_timeout: 10min
+        jit: off
+        max_worker_processes: 15
+        max_parallel_workers: 8
+        max_parallel_workers_per_gather: 4
+        max_parallel_maintenance_workers: 4
+        tcp_keepalives_count: 10
+        tcp_keepalives_idle: 300
+        tcp_keepalives_interval: 30
+
+  initdb:  # List options to be passed on to initdb
+    - encoding: UTF8
+    - locale: ru_RU.UTF-8
+    - data-checksums
+
+  pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
+    - local   all             all                                     trust
+    - local   replication     all                                     trust
+    - host    all             all             0.0.0.0/0               trust
+    - host    replication     all             127.0.0.1/32            trust
+    - host    replication     all             ::1/128                 trust
+    - host replication replicator 127.0.0.1/32 scram-sha-256
+    - local replication postgres    scram-sha-256
+    - host replication replicator  localhost   scram-sha-256
+    - host replication replicator              0.0.0.0/0              trust
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: {{ etcd_host }}:5432
+  use_unix_socket: true
+  data_dir: {{ data_dir }}
+  bin_dir: /opt/tantor/db/15/bin
+  config_dir: /var/lib/postgresql/tantor-se-15/data/
+  pgpass: /var/lib/postgresql/tantor-se-15/.pgpass_patroni
+  authentication:
+    replication:
+      username: replicator
+      password: {{ db_pass }}
+    superuser:
+      username: postgres
+      password: {{ db_pass }}
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+
+watchdog:
+  mode: automatic
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  nosync: false
+  noloadbalance: false
+  nofailover: false
+  clonefrom: false
