@@ -22,9 +22,9 @@ collection_of_information() {
     read -p "Укажите IP-адрес для 3 хоста: " ip_address_node3
 
     # Замена IP-адресов в файле hosts.ini
-    sed -i "/^node1/s/ansible_host=[^ ]*/ansible_host=$ip_address_node1/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node2/s/ansible_host=[^ ]*/ansible_host=$ip_address_node2/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node3/s/ansible_host=[^ ]*/ansible_host=$ip_address_node3/" /tmp/tantor/Main/hosts.ini
+    sed -i "/^node1/s/ansible_host=[^ ]*/ansible_host=$ip_address_node1/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node2/s/ansible_host=[^ ]*/ansible_host=$ip_address_node2/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node3/s/ansible_host=[^ ]*/ansible_host=$ip_address_node3/" /tmp/Patroni/inventory/hosts.ini
 
     # Блок сбора имен пользователей
     echo "Укажите имена пользователей хостов"
@@ -40,9 +40,9 @@ collection_of_information() {
     read -p "Укажите имя пользователя для 3 хоста: " hostname_node3
 
     # Замена имен пользователей в файле hosts.ini
-    sed -i "/^node1/s/ansible_user=[^ ]*/ansible_user=$hostname_node1/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node2/s/ansible_user=[^ ]*/ansible_user=$hostname_node2/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node3/s/ansible_user=[^ ]*/ansible_user=$hostname_node3/" /tmp/tantor/Main/hosts.ini
+    sed -i "/^node1/s/ansible_user=[^ ]*/ansible_user=$hostname_node1/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node2/s/ansible_user=[^ ]*/ansible_user=$hostname_node2/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node3/s/ansible_user=[^ ]*/ansible_user=$hostname_node3/" /tmp/Patroni/inventory/hosts.ini
 
     # Блок сбора паролей хостов
     echo "Укажите пароли хостов"
@@ -58,12 +58,12 @@ collection_of_information() {
     read -p "Укажите пароль для 3 хоста: " password_host3
 
     # Замена паролей в файле hosts.ini
-    sed -i "/^node1/s/ansible_password=[^ ]*/ansible_password=$password_host1/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node2/s/ansible_password=[^ ]*/ansible_password=$password_host2/" /tmp/tantor/Main/hosts.ini
-    sed -i "/^node3/s/ansible_password=[^ ]*/ansible_password=$password_host3/" /tmp/tantor/Main/hosts.ini
+    sed -i "/^node1/s/ansible_password=[^ ]*/ansible_password=$password_host1/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node2/s/ansible_password=[^ ]*/ansible_password=$password_host2/" /tmp/Patroni/inventory/hosts.ini
+    sed -i "/^node3/s/ansible_password=[^ ]*/ansible_password=$password_host3/" /tmp/Patroni/inventory/hosts.ini
 
 # Блок сбора ip-адресов внутренней сети баз данных 
-    echo "Укажите ip-адресов внутренней сети баз данных"
+    echo "Укажите ip-адреса внутренней сети баз данных"
     sleep 1
     echo
     # Запрос пароля для node1
@@ -75,20 +75,20 @@ collection_of_information() {
     # Запрос пароля для node3
     read -p "Укажите ip-адрес для 3 хоста: " ip_data_base3
 
-    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base1/" /tmp/tantor/host_vars/node1.yml
+    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base1/" /tmp/Patroni/host_vars/node1.yml
 
     # Замена IP-адресов в файле host_vars/node2.yml
-    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base2/" /tmp/tantor/host_vars/node2.yml
+    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base2/" /tmp/Patroni/host_vars/node2.yml
 
     # Замена IP-адресов в файле host_vars/node3.yml
-    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base3/" /tmp/tantor/host_vars/node3.yml
+    sed -i "/^etcd_host:/s/etcd_host: [^ ]*/etcd_host: $ip_data_base3/" /tmp/Patroni/host_vars/node3.yml
 
 # Блок сбора vip-ip-адреса базы для сервиса keepalived
     echo "Укажите vip-ip-адрес баз данных"
     sleep 1
     echo 
     read -p "Укажите ip-адрес: " vip_ip
-    sed -i "/^vip_address:/s/vip_address: [^ ]*/vip_address: $vip_ip/" /tmp/tantor/host_vars/node1.yml
+    sed -i "/^vip_address:/s/vip_address: [^ ]*/vip_address: $vip_ip/" /tmp/Patroni/host_vars/node1.yml
 
 # Блок сбора директории установки
     echo "Укажите директорию для установки базы данных"
@@ -97,7 +97,7 @@ collection_of_information() {
     read -p "Укажите директорию: " data_dir
 
     # Замена директории в файле host_vars/node1.yml
-    sed -i "/^data_dir:/s|data_dir: [^ ]*|data_dir: $data_dir|" /tmp/tantor/host_vars/node1.yml
+    sed -i "/^data_dir:/s|data_dir: [^ ]*|data_dir: $data_dir|" /tmp/Patroni/host_vars/node1.yml
 
 # Блок сбора интерфейса ВМ для сервиса keepalived
     echo "Укажите имя интерфейса сети баз данных"
@@ -112,13 +112,22 @@ collection_of_information() {
     # Запрос пароля для node3
     read -p "Укажите интерфейс для 3 хоста: " storage_interface3
 
-    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface1/" /tmp/tantor/host_vars/node1.yml
+    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface1/" /tmp/Patroni/host_vars/node1.yml
 
     # Замена IP-адресов в файле host_vars/node2.yml
-    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface2/" /tmp/tantor/host_vars/node2.yml
+    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface2/" /tmp/Patroni/host_vars/node2.yml
 
     # Замена IP-адресов в файле host_vars/node3.yml
-    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface3/" /tmp/tantor/host_vars/node3.yml
+    sed -i "/^storage_interface:/s/storage_interface: [^ ]*/storage_interface: $storage_interface3/" /tmp/Patroni/host_vars/node3.yml
+
+    # Блок сбора пароля суперюзера базы
+    echo "Укажите пароль для пользователя postgres базы данных"
+    sleep 1
+    echo
+    read -p "Укажите пароль: " db_pass
+
+    # Замена директории в файле host_vars/node1.yml
+    sed -i "/^db_pass:/s|db_pass: [^ ]*|db_pass: $db_pass|" /tmp/Patroni/host_vars/node1.yml
 }
 
 # Выбор баз из списка
@@ -132,8 +141,8 @@ case $answer in
     1)
         echo "Вы выбрали Tantor (Astra Linux)"
         collection_of_information
-        echo "Сбор данных завершен, пристумаем у установке"
-        ansible-playbook -i host.ini tantor_db.yml
+        echo "Сбор данных завершен, приступаем у установке"
+        ansible-playbook -i /tmp/inventory/host.ini /tmp/tantor_playbook/tantor_db.yml
         ;;
     2)
         echo "Вы выбрали Postgres Vanila (Alt Linux)"
