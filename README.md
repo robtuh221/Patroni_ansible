@@ -12,3 +12,6 @@ bash master.sh
 You will be prompted to select a database and fill in the required variables.
 
 All entered data remains in the local directory.
+
+Link to download zip archive
+wget https://github.com/robtuh221/Patroni_ansible/archive/refs/heads/main.zip -O Patroni_ansible.zip
