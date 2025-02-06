@@ -126,9 +126,9 @@ postgresql:
   connect_address: {{ etcd_host }}:5432
   use_unix_socket: true
   data_dir: {{ data_dir }}
-  bin_dir: /opt/tantor/db/15/bin
-  config_dir: /var/lib/postgresql/tantor-se-15/data/
-  pgpass: /var/lib/postgresql/tantor-se-15/.pgpass_patroni
+  bin_dir: 
+  config_dir: {{ data_dir}}
+  pgpass: {{ data_dir}}.pgpass_patroni
   authentication:
     replication:
       username: replicator
