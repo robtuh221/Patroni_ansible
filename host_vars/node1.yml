@@ -1,7 +1,8 @@
 etcd_host: 
 etcd_hostname: pp_services_1
 patroni_hostname: patroni1
-storage_interface: eth1
+storage_interface:
 vip_address: 
-data_dir: /var/lib/postgresql/tantor-se-15/data/
+data_dir: 
+bin_dir: 
 db_pass: 
