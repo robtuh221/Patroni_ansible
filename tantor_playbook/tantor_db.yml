@@ -25,14 +25,12 @@
         path: /etc/apt/sources.list
         line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-base 1.7_x86-64 main non-free contrib"
         state: present
-        insertafter: EOF
 
     - name: Убедиться, что расширение репозитория присутствует
       ansible.builtin.lineinfile:
         path: /etc/apt/sources.list
         line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-extended 1.7_x86-64 main contrib non-free"
         state: present
-        insertafter: EOF
 
     - name: Исправить ошибки в состоянии dpkg
       ansible.builtin.command:
@@ -72,7 +70,7 @@
     - name: Установить пакет patroni через pip
       ansible.builtin.pip:
         name: patroni
-    
+
     - name: Установка пакета keepalived
       ansible.builtin.apt:
         name: keepalived
@@ -87,24 +85,24 @@
     - name: Скачать скрипт db_installer.sh
       ansible.builtin.get_url:
         url: https://public.tantorlabs.ru/db_installer.sh
-        dest: /tmp/Patroni/db_installer.sh
+        dest: /tmp/db_installer.sh
         mode: '0755'  # Устанавливает права доступа 755 (чтение и выполнение для всех)
         validate_certs: no  # Отключает проверку сертификатов
 
     - name: Убедиться, что скрипт db_installer.sh имеет права на выполнение
       ansible.builtin.file:
-        path: /tmp/Patroni/db_installer.sh
+        path: /tmp/db_installer.sh
         mode: '0755'
 
     - name: Скопировать файл tantor-se-server-15_15.6.0_amd64.deb на удаленный хост
       ansible.builtin.copy:
-        src: /tmp/test_ansible/tantor-se-server-15_15.6.0_amd64.deb
-        dest: /tmp/Patroni/tantor-se-server-15_15.6.0_amd64.deb
+        src: /tmp/Patroni/tantor-se-server-15_15.6.0_amd64.deb
+        dest: /tmp/tantor-se-server-15_15.6.0_amd64.deb
         mode: '0644'
 
     - name: Сборка базы Tantor
       ansible.builtin.shell: |
-        /tmp/Patroni/db_installer.sh --do-initdb --from-file=/tmp/Patroni/tantor-se-server-15_15.6.0_amd64.deb
+        /tmp/db_installer.sh --do-initdb --from-file=/tmp/tantor-se-server-15_15.6.0_amd64.deb
 
     - name: Вывод статуса сервиса tantor-se-server-15.service
       ansible.builtin.command:
@@ -228,15 +226,14 @@
 
     - name: Добавление параметров в файл sysctl.conf
       ansible.builtin.lineinfile:
-      path: /etc/sysctl.conf
-      line: "net.ipv4.ip_nonlocal_bind=1"
-      state: present
-      insertafter: EOF
-    
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_nonlocal_bind=1"
+        state: present
+
     - name: Перезагрузка sysctl
       ansible.builtin.shell: |
-       sysctl -p
-    
+        sysctl -p
+
     - name: Добавление конфигурации keepalived
       ansible.builtin.template:
         src: /tmp/Patroni/configs/keeaplived.conf.j2
@@ -244,13 +241,13 @@
         owner: root
         group: root
         mode: '0777'
-    
+
     - name: Добавление в автозагрузку и перезапуск сервиса keepalived
       ansible.builtin.systemd:
         name: keepalived
         enabled: yes
         state: restarted
-    
+
 #################################################___Настройка сервиса haproxy___###################################################
 
     - name: Добавление конфигурации haproxy
@@ -260,9 +257,9 @@
         owner: root
         group: root
         mode: '0777'
-    
+
     - name: Добавление в автозагрузку и перезапуск сервиса keepalived
       ansible.builtin.systemd:
-          name: haproxy
-          enabled: yes
-          state: restarted
+        name: haproxy
+        enabled: yes
+        state: restarted
