@@ -126,7 +126,7 @@ postgresql:
   connect_address: {{ etcd_host }}:5432
   use_unix_socket: true
   data_dir: {{ data_dir }}
-  bin_dir: 
+  bin_dir: {{ bin_dir }}
   config_dir: {{ data_dir}}
   pgpass: {{ data_dir}}.pgpass_patroni
   authentication:

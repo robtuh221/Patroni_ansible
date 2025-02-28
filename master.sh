@@ -142,13 +142,14 @@ case $answer in
         echo "Вы выбрали Tantor (Astra Linux)"
         collection_of_information
         echo "Сбор данных завершен, приступаем у установке"
-        ansible-playbook -i /tmp/Patroni/inventory/host.ini /tmp/Patroni/tantor_playbook/tantor_db.yml
+        ansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/tantor_playbook/tantor_db.yml
         ;;
     2)
         echo "Вы выбрали Postgres Vanila (Alt Linux)"
         ;;
     3)
         echo "Вы выбрали Postgres Pro (Alt Linux)"
+        ansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/postgres_playbooks/postgres_pro_db.yml
         ;;
     *)
         echo "Неверный выбор. Пожалуйста, укажите значение от 1 до 3."
