@@ -5,8 +5,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   vars_files:
-    - /tmp/Patroni/host_vars/{{ inventory_hostname }}.yml
-
+    - /tmp/Patroni/group_vars/{{ inventory_hostname }}.yml
   tasks:
     ###################################################Блок обновления пакетов и установка совместимостей###################################################
     - name: Убить процессы, блокирующие dpkg
@@ -60,6 +59,14 @@
       ansible.builtin.pip:
         name: setuptools
 
+    - name: Обновить pip, setuptools, wheel
+      ansible.builtin.pip:
+        name:
+          - pip
+          - setuptools
+          - wheel
+        state: latest
+
     - name: Установить необходимые пакеты Python
       ansible.builtin.pip:
         name:
@@ -80,6 +87,11 @@
       ansible.builtin.apt:
         name: haproxy
         state: present
+
+    - name: Очистить кэш apt
+      ansible.builtin.apt:
+        autoclean: yes
+        autoremove: yes
     #############################################################################################################################################################
     #############################################Блок установки базы Tantor######################################################################################
     - name: Скачать скрипт db_installer.sh
@@ -135,8 +147,13 @@
 ##################################################################################################################################################################
 ##################################################Блок установки сервиса etcd#####################################################################################
 - name: Настройка и запуск etcd
-  hosts: servers
+  hosts: all
   become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - /tmp/Patroni/group_vars/{{ inventory_hostname }}.yml
+    - /tmp/Patroni/group_vars/all.yml
   tasks:
     - name: Создать директорию для конфигурации etcd (если не существует)
       ansible.builtin.file:
@@ -150,9 +167,13 @@
       ansible.builtin.template:
         src: /tmp/Patroni/configs/etcd.conf.j2
         dest: /etc/default/etcd
-        owner: root
-        group: root
-        mode: '0777'
+    
+    - name: Остановить сервис etcd
+      systemd:
+        name: etcd
+        state: stopped
+        enabled: no
+      become: yes
 
     - name: Очистить директорию с членами кластера
       ansible.builtin.shell: |
@@ -171,6 +192,12 @@
 - name: Настройка и запуск Patroni
   hosts: servers
   become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - /tmp/Patroni/group_vars/{{ inventory_hostname }}.yml
+    - /tmp/Patroni/group_vars/all.yml
+
   tasks:
     - name: Развернуть конфиг сервиса Patroni
       ansible.builtin.template:
@@ -240,7 +267,7 @@
         dest: /etc/keepalived/keepalived.conf
         owner: root
         group: root
-        mode: '0777'
+        mode: '0644'
 
     - name: Добавление в автозагрузку и перезапуск сервиса keepalived
       ansible.builtin.systemd:
