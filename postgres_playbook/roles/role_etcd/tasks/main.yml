@@ -1,0 +1,31 @@
+    - name: Создать директорию для конфигурации etcd (если не существует)
+      ansible.builtin.file:
+        path: /var/lib/etcd
+        state: directory
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Развернуть конфиг etcd из шаблона
+      ansible.builtin.template:
+        src: /tmp/Patroni/configs/etcd.conf.j2
+        dest: /etc/etcd/etcd.conf
+    
+    - name: Остановить сервис etcd
+      systemd:
+        name: etcd
+        state: stopped
+        enabled: no
+      become: yes
+
+    - name: Очистить директорию с членами кластера
+      ansible.builtin.shell: |
+        rm -rf /var/lib/etcd/member/*
+
+    - name: Reload systemd
+      ansible.builtin.command:
+        cmd: systemctl daemon-reload
+
+    - name: Restart etcd
+      ansible.builtin.command:
+        cmd: systemctl restart etcd

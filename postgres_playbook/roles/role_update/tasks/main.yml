@@ -1,0 +1,42 @@
+- name: Обновить кэш пакетов
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Обновить все пакеты до последних версий
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Установить pip3
+  ansible.builtin.apt:
+    name: python3-module-pip
+    state: present
+
+- name: Установить etcd
+  ansible.builtin.apt:
+    name: etcd
+    state: present
+
+- name: Установить setuptools через pip
+  ansible.builtin.pip:
+    name: setuptools
+
+- name: Установить необходимые пакеты Python
+  ansible.builtin.pip:
+    name:
+      - psycopg
+      - python-etcd
+      - etcd3
+
+- name: Установить пакет patroni
+  ansible.builtin.apt:
+    name: patroni
+
+- name: Установка пакета keepalived
+  ansible.builtin.apt:
+    name: keepalived
+    state: present
+
+- name: Установка пакета haproxy
+  ansible.builtin.apt:
+    name: haproxy
+    state: present

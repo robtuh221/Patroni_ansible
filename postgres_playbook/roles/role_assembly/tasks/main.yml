@@ -1,0 +1,51 @@
+- name: Скопировать файл db_installer.sh на удаленный хост 
+  ansible.builtin.copy:
+    src: /tmp/Patroni/components/pgpro-repo-add.sh
+    dest: /tmp/pgpro-repo-add.sh
+    mode: '0755'
+
+- name: Запуск скрипта для обновления репозитория 
+  ansible.builtin.shell: sh /tmp/pgpro-repo-add.sh
+
+- name: Установка базы postgrespro-15
+  ansible.builtin.apt:
+    name: postgrespro-std-15
+    state: present
+
+- name: Вывод статуса сервиса postgrespro-std-15.service
+  ansible.builtin.command:
+    cmd: systemctl status postgrespro-std-15.service
+  register: postgresdb_status
+  ignore_errors: yes
+
+- name: Вывести статус сервиса postgrespro-std-15.service
+  ansible.builtin.debug:
+    msg: "{{ postgresdb_status.stdout }}"
+
+- name: Остановка сервиса postgrespro-std-15.service
+  ansible.builtin.systemd:
+    name: postgrespro-std-15.service
+    state: stopped
+    enabled: no
+
+- name: Очистка директории /var/lib/pgpro/std-15/data/
+  ansible.builtin.file:
+    path: /var/lib/pgpro/std-15/data/
+    state: absent
+
+- name: Воссоздание директории /var/lib/pgpro/std-15/data/
+  ansible.builtin.file:
+    path: /var/lib/pgpro/std-15/data/
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
+- name: Проверка очищенной директории
+  ansible.builtin.command:
+    cmd: ls -la /var/lib/pgpro/std-15/data/
+  register: look_directory
+
+- name: Вывести статус выполнения очистки
+  ansible.builtin.debug:
+    msg: "{{ look_directory.stdout }}"
