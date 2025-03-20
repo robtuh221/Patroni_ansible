@@ -1,0 +1,15 @@
+etcd_hostnames:
+  - pp_services_1
+  - pp_services_2
+  - pp_services_3
+
+etcd_hosts:
+  - 192.168.5.101
+  - 192.168.5.102
+  - 192.168.5.103
+
+vip_address: 192.168.5.200
+data_dir: /var/lib/postgresql/tantor-se-15/data/
+bin_dir: /opt/tantor/db/15/bin/
+pg_pass_dir: /var/lib/postgresql/
+db_pass: PiGiqaap00

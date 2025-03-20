@@ -1,0 +1,2 @@
+patroni_hostname: patroni2
+storage_interface: eth1
