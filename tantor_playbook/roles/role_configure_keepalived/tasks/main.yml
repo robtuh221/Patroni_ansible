@@ -1,0 +1,23 @@
+    - name: Добавление параметров в файл sysctl.conf
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_nonlocal_bind=1"
+        state: present
+
+    - name: Перезагрузка sysctl
+      ansible.builtin.shell: |
+        sysctl -p
+
+    - name: Добавление конфигурации keepalived
+      ansible.builtin.template:
+        src: /tmp/Patroni/configs/keeaplived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Добавление в автозагрузку и перезапуск сервиса keepalived
+      ansible.builtin.systemd:
+        name: keepalived
+        enabled: yes
+        state: restarted

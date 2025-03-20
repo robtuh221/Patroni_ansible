@@ -1,0 +1,91 @@
+    - name: Убить процессы, блокирующие dpkg
+      ansible.builtin.shell: lsof -t /var/lib/dpkg/lock | xargs kill -9 || true
+      changed_when: false
+
+    - name: Закомментировать запись репозитория CD-ROM
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        regexp: '^deb cdrom:'
+        line: '# deb cdrom:[OS Astra Linux 1.7.0 1.7_x86-64 DVD ]/ 1.7_x86-64 contrib main non-free'
+        state: present
+
+    - name: Убедиться, что база репозитория присутствует
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-base 1.7_x86-64 main non-free contrib"
+        state: present
+        create: yes
+
+    - name: Убедиться, что расширение репозитория присутствует
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.astralinux.ru/astra/frozen/1.7_x86-64/1.7.3/uu/2/repository-extended 1.7_x86-64 main contrib non-free"
+        state: present
+        create: yes
+
+    - name: Исправить ошибки в состоянии dpkg
+      ansible.builtin.command: dpkg --configure -a
+      register: dpkg_fix
+      changed_when: "'dpkg' in dpkg_fix.stdout"
+
+    - name: Обновить кэш пакетов
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Обновить все пакеты до последних версий
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Установить python3-pip
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+
+    - name: Проверить наличие pip
+      ansible.builtin.command: which pip3
+      register: pip_check
+      changed_when: false
+      failed_when: pip_check.rc != 0
+
+    - name: Установить setuptools через pip
+      ansible.builtin.pip:
+        name: setuptools
+
+    - name: Обновить pip, setuptools, wheel
+      ansible.builtin.pip:
+        name:
+          - pip
+          - setuptools
+          - wheel
+        state: latest
+
+    - name: Установить необходимые пакеты Python
+      ansible.builtin.pip:
+        name:
+          - psycopg
+          - python-etcd
+          - etcd3
+
+    - name: Установить пакет patroni через pip
+      ansible.builtin.pip:
+        name: patroni
+
+    - name: Установка etcd
+      ansible.builtin.apt:
+        name: etcd
+        state: present
+
+    - name: Установка пакета keepalived
+      ansible.builtin.apt:
+        name: keepalived
+        state: present
+
+    - name: Установка пакета haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+
+    - name: Очистить кэш apt
+      ansible.builtin.apt:
+        autoclean: yes
+        autoremove: yes

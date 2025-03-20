@@ -1,0 +1,13 @@
+    - name: Добавление конфигурации haproxy
+      ansible.builtin.template:
+        src: /tmp/Patroni/configs/haproxy.conf.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Добавление в автозагрузку и перезапуск сервиса keepalived
+      ansible.builtin.systemd:
+        name: haproxy
+        enabled: yes
+        state: restarted

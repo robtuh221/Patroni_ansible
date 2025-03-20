@@ -1,0 +1,49 @@
+    - name: Развернуть конфиг сервиса Patroni
+      ansible.builtin.template:
+        src: /tmp/Patroni/configs/patroni_service.conf.j2
+        dest: /lib/systemd/system/patroni.service
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Создать директорию для конфигурации Patroni (если не существует)
+      ansible.builtin.file:
+        path: /etc/patroni
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0755'
+
+    - name: Развернуть конфиг Patroni из шаблона
+      ansible.builtin.template:
+        src: /tmp/Patroni/configs/patroni.conf.j2
+        dest: /etc/patroni/config.yml
+        owner: postgres
+        group: postgres
+        mode: '0755'
+
+    - name: Добавление сервиса patroni в автозагрузку
+      ansible.builtin.systemd:
+        name: patroni
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Создать директорию для логов psql
+      ansible.builtin.file:
+        path: /var/log/pgsql
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0777'
+
+    - name: Установление прав на директорию базы данных
+      ansible.builtin.file:
+        path: /var/lib/postgresql/tantor-se-15
+        owner: postgres
+        group: postgres
+        mode: '0700'
+
+    - name: Запуск сервиса Patroni
+      ansible.builtin.systemd:
+        name: patroni
+        state: restarted
