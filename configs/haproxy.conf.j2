@@ -19,9 +19,12 @@ defaults
     timeout server     60m
     timeout check      15s
 
+# Определяем индекс текущей ноды в группе servers
+{% set node_index = groups['servers'].index(inventory_hostname) %}
+
 listen stats
     mode http
-   ########__ ПРОВЕРЬ!!!__####### bind {% for host in groups['servers'] %},{{ hostvars[host]['etcd_host'] }}:7000{% endfor %}
+    bind {{ etcd_hosts[node_index] }}:7000
     stats enable
     stats uri /
 
@@ -32,44 +35,42 @@ listen master
     option httpchk OPTIONS /primary
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
- server astra1 172.20.130.101:5432 check port 8008
- server astra2 172.20.130.102:5432 check port 8008
- server astra3 172.20.130.103:5432 check port 8008
-
+    {% for host in groups['servers'] %}
+    server {{ hostvars[host]['ansible_hostname'] }} {{ etcd_hosts[loop.index0] }}:5432 check port 8008
+    {% endfor %}
 
 listen replicas
     bind {{ vip_address }}:5001
     maxconn 10000
     option tcplog
-        option httpchk OPTIONS /replica?lag=100MB
-        balance roundrobin
+    option httpchk OPTIONS /replica?lag=100MB
+    balance roundrobin
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
- server astra1 172.20.130.101:5432 check port 8008
- server astra2 172.20.130.102:5432 check port 8008
- server astra3 172.20.130.103:5432 check port 8008
+    {% for host in groups['servers'] %}
+    server {{ hostvars[host]['ansible_hostname'] }} {{ etcd_hosts[loop.index0] }}:5432 check port 8008
+    {% endfor %}
 
 listen replicas_sync
     bind {{ vip_address }}:5002
     maxconn 10000
     option tcplog
-        option httpchk OPTIONS /sync
-        balance roundrobin
+    option httpchk OPTIONS /sync
+    balance roundrobin
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
- server astra1 172.20.130.101:5432 check port 8008
- server astra2 172.20.130.102:5432 check port 8008
- server astra3 172.20.130.103:5432 check port 8008
-
+    {% for host in groups['servers'] %}
+    server {{ hostvars[host]['ansible_hostname'] }} {{ etcd_hosts[loop.index0] }}:5432 check port 8008
+    {% endfor %}
 
 listen replicas_async
     bind {{ vip_address }}:5003
     maxconn 10000
     option tcplog
-        option httpchk OPTIONS /async?lag=100MB
-        balance roundrobin
+    option httpchk OPTIONS /async?lag=100MB
+    balance roundrobin
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
- server astra1 172.20.130.101:5432 check port 8008
- server astra2 172.20.130.102:5432 check port 8008
- server astra3 172.20.130.103:5432 check port 8008
+    {% for host in groups['servers'] %}
+    server {{ hostvars[host]['ansible_hostname'] }} {{ etcd_hosts[loop.index0] }}:5432 check port 8008
+    {% endfor %}

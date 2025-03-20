@@ -22,8 +22,8 @@ bootstrap:
     synchronous_node_count: 1
     postgresql:
       use_pg_rewind: true
-      remove_data_directory_on_diverged_timelines: false
-      remove_data_directory_on_rewind_failure: false
+      remove_data_directory_on_diverged_timelines: true
+      remove_data_directory_on_rewind_failure: true
       use_slots: true
       parameters:
         max_connections: 1000
@@ -57,7 +57,7 @@ bootstrap:
         archive_mode: on
         archive_timeout: 300s
         archive_command: cd .
-        wal_level: replica
+        wal_level: hot_standby
         wal_keep_size: 2GB
         max_wal_senders: 10
         max_replication_slots: 10
@@ -89,7 +89,7 @@ bootstrap:
         log_truncate_on_rotation: on
         log_rotation_age: 1d
         log_rotation_size: 0
-        log_line_prefix: '%t [%p-%l] %r %q%u@%d'
+        log_line_prefix: %t [%p-%l] %r %q%u@%d
         log_filename: postgresql-%a.log
         log_directory: /var/log/pgsql/
         hot_standby_feedback: on
@@ -127,7 +127,7 @@ postgresql:
   data_dir: {{ data_dir }}
   bin_dir: {{ bin_dir }}
   config_dir: {{ data_dir }}
-  pgpass: {{ pg_pass_dir }}.pgpass_patroni
+  pgpass: {{ data_dir }}.pgpass_patroni
   authentication:
     replication:
       username: replicator
