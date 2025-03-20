@@ -4,10 +4,10 @@ echo "Вас приветствует Мастер установки Баз Д�
 echo "Далее будут предложены ввести данные от 3 хостов баз данных"
 echo "Все данные будут записаны в локальные файлы инсталяции после удалены"
 echo "Автор Тухватуллин Роберт"
-sleep 1
+sleep 0.5
 
 # Блок по сбору данных о установливаемой базы данных
-collection_of_information() {
+#collection_of_information() {
     # Блок сбора IP-адресов доступа
     echo "Укажите IP-адреса доступа к хостам"
     sleep 1
@@ -140,16 +140,16 @@ read -p "Укажите значение (1-3): " answer
 case $answer in
     1)
         echo "Вы выбрали Tantor (Astra Linux)"
-        collection_of_information
+        #collection_of_information
         echo "Сбор данных завершен, приступаем у установке"
-        ansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/tantor_playbook/tantor_db.yml
+        ansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/tantor_playbook/tantor_master.yml
         ;;
     2)
         echo "Вы выбрали Postgres Vanila (Alt Linux)"
         ;;
     3)
         echo "Вы выбрали Postgres Pro (Alt Linux)"
-        ansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/postgres_playbooks/postgres_pro_db.yml
+        aansible-playbook -i /tmp/Patroni/inventory/hosts.ini /tmp/Patroni/postgres_playbook/postgres_pro_master.yml
         ;;
     *)
         echo "Неверный выбор. Пожалуйста, укажите значение от 1 до 3."
